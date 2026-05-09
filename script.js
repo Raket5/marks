@@ -60,26 +60,45 @@ window.addEventListener("DOMContentLoaded", async () => {
 });
 
 // ---------------------------------------------------------------
-// CALL APPS SCRIPT
+// CALL APPS SCRIPT — URL parameter based (CORS-safe)
 // ---------------------------------------------------------------
 async function callScript(fn, args) {
-  // If running inside Apps Script (google.script.run), use that
-  if (typeof google !== "undefined" && google.script && google.script.run) {
-    return new Promise((res, rej) => {
-      google.script.run
-        .withSuccessHandler(res)
-        .withFailureHandler(rej)
-        [fn](...args);
-    });
-  }
-  // Otherwise call via URL (GitHub Pages mode)
   if (!SCRIPT_URL || SCRIPT_URL.includes("YOUR_APPS_SCRIPT")) {
     showDemoData(fn, args);
     return null;
   }
-  const url = `${SCRIPT_URL}?fn=${fn}&args=${encodeURIComponent(JSON.stringify(args))}`;
-  const resp = await fetch(url);
-  return resp.json();
+
+  let url = SCRIPT_URL;
+
+  if (fn === "getClasses") {
+    url += "?action=getClasses";
+
+  } else if (fn === "getStudents") {
+    url += "?action=getStudents&classKey=" + encodeURIComponent(args[0]);
+
+  } else if (fn === "searchByRoll") {
+    url += "?action=searchByRoll&classKey=" + encodeURIComponent(args[0])
+         + "&roll=" + encodeURIComponent(args[1]);
+
+  } else if (fn === "adminLogin") {
+    url += "?action=adminLogin&user=" + encodeURIComponent(args[0])
+         + "&pass=" + encodeURIComponent(args[1]);
+
+  } else if (fn === "updateStudentRow") {
+    url += "?action=updateStudent"
+         + "&classKey="  + encodeURIComponent(args[0])
+         + "&rowNumber=" + encodeURIComponent(args[1])
+         + "&colValues=" + encodeURIComponent(JSON.stringify(args[2]));
+  }
+
+  try {
+    const resp = await fetch(url);
+    const text = await resp.text();
+    return JSON.parse(text);
+  } catch(err) {
+    console.error("Script call failed:", err);
+    return { error: err.message };
+  }
 }
 
 // ---------------------------------------------------------------
@@ -264,8 +283,12 @@ async function doLogin() {
 
   // For GitHub Pages mode: check hardcoded creds client-side
   // (In Apps Script mode, verifies server-side too)
-  const ok = (user === "admin" && pass === "admin2026")
-    || await callScript("adminLogin", [user, pass]).catch(() => false);
+  // Check credentials: client-side for GitHub Pages, also verify via server
+  let ok = (user === "admin" && pass === "admin2026");
+  if (!ok) {
+    const res = await callScript("adminLogin", [user, pass]).catch(() => null);
+    ok = res && res.ok === true;
+  }
 
   if (ok) {
     isAdmin = true;
