@@ -284,7 +284,7 @@ async function doLogin() {
   // For GitHub Pages mode: check hardcoded creds client-side
   // (In Apps Script mode, verifies server-side too)
   // Check credentials: client-side for GitHub Pages, also verify via server
-  let ok = (user === "admin" && pass === "admin2026");
+  let ok = (user === "admin" && pass === "admin1026");
   if (!ok) {
     const res = await callScript("adminLogin", [user, pass]).catch(() => null);
     ok = res && res.ok === true;
