@@ -346,7 +346,7 @@ function getCardCSS() {
     .sc-footer-left, .sc-footer-right { text-align:center; }
     .sc-sig-line { width: 110px; border-bottom: 1.5px solid #999; margin-bottom: 5px; }
     .sc-sig-label { font-size: 8pt; color: #888; }
-    @media print { body { background:#fff; padding:0; } .student-card { box-shadow:none; border-radius:0; width:100%; } @page { size: A4; margin: 15mm; } }
+    @media print { body { background:#fff; padding:0; } .student-card { box-shadow:none; border-radius:0; width:100%; } @page { size: A4; margin: 15mm; } * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } }
   `;
 }
 // ---------------------------------------------------------------
