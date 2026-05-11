@@ -297,10 +297,13 @@ async function downloadStudentCard() {
   const area = document.getElementById("studentCardArea");
   if (!area || !area.innerHTML.trim()) return;
 
+  const studentName = currentData?.students?.[0]?.["Student's Name"] || "result";
+  const roll = currentData?.students?.[0]?.["Roll"] || "";
+
   const html = `<!DOCTYPE html><html><head><title>Result Card</title>
     <style>
       * { margin:0; padding:0; box-sizing:border-box; }
-      body { font-family: 'Segoe UI', Arial, sans-serif; background:#fff; padding: 30px; }
+      body { font-family: 'Segoe UI', Arial, sans-serif; background:#fff; }
       .student-card { max-width: 520px; margin: 0 auto; border: 2px solid #1a2744; border-radius: 12px; overflow: hidden; }
       .sc-header { background: #1a2744; color: #fff; padding: 20px 24px 14px; text-align: center; }
       .sc-school { font-size: 15pt; font-weight: 700; }
@@ -319,17 +322,24 @@ async function downloadStudentCard() {
       .sc-total-row td { background: #1a2744; color: #fff; font-size: 11pt; padding: 11px 16px; }
       .sc-comment { padding: 10px 20px; font-size: 9.5pt; color: #555; background: #fffbf0; border-top: 1px solid #ede8d0; }
       .sc-footer { display: flex; justify-content: space-between; padding: 16px 24px 14px; font-size: 9pt; color: #777; border-top: 1px solid #eee; }
-    </style></head><body>
+      @media print { @page { size: A4; margin: 20mm; } }
+    </style>
+    <script>window.onload = function(){ window.print(); window.onafterprint = function(){ window.close(); }; }<\/script>
+    </head><body>
     ${area.innerHTML}
     </body></html>`;
 
   const blob = new Blob([html], { type: "text/html" });
   const url  = URL.createObjectURL(blob);
-  const a    = document.createElement("a");
-  a.href     = url;
-  a.download = `result_${currentData?.students?.[0]?.["Roll"] || "card"}.html`;
-  a.click();
-  URL.revokeObjectURL(url);
+  const w    = window.open(url, "_blank");
+  if (!w) {
+    // fallback — direct download if popup blocked
+    const a    = document.createElement("a");
+    a.href     = url;
+    a.download = `result_${roll}_${studentName}.html`;
+    a.click();
+  }
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
 }
 // ---------------------------------------------------------------
 // RENDER TABLE
@@ -385,7 +395,7 @@ function renderTable(data) {
           <p>${count} students &nbsp;|&nbsp; Total marks: ${fmt.total}</p>
         </div>
         <div class="card-actions">
-          <button class="btn btn-print btn-sm" onclick="openPrint()">🖨️ Print PDF</button>
+          ${isAdmin ? `<button class="btn btn-print btn-sm" onclick="openPrint()">🖨️ Print PDF</button>` : ""}
         </div>
       </div>
       <div class="table-wrapper">
