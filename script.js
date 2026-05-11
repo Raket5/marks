@@ -558,6 +558,17 @@ document.addEventListener("keydown", e => {
   if (e.key === "Enter") {
     if (!document.getElementById("loginModal").classList.contains("hidden")) doLogin();
     if (!document.getElementById("editModal").classList.contains("hidden"))  saveEdit();
+    if (!document.getElementById("printModal").classList.contains("hidden")) doPrint();
+    // Search — Enter works from class dropdown or roll input
+    const allModalsHidden =
+      document.getElementById("loginModal").classList.contains("hidden") &&
+      document.getElementById("editModal").classList.contains("hidden") &&
+      document.getElementById("printModal").classList.contains("hidden");
+    if (allModalsHidden) {
+      const roll = document.getElementById("rollInput").value.trim();
+      if (roll) searchByRoll();
+      else loadClass();
+    }
   }
 });
 
