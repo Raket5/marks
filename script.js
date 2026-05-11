@@ -364,10 +364,14 @@ async function saveEdit() {
   const fmt = getFormat(currentData.classKey);
   const colValues = {};
   let valid = true;
-
   for (const m of fmt.marks) {
     const el  = document.getElementById("ef_" + m.col);
-    const val = parseFloat(el.value);
+    const raw = el.value.trim();
+    if (raw === "") {
+      colValues[m.col] = "";
+      continue;
+    }
+    const val = parseFloat(raw);
     if (isNaN(val) || val < 0 || val > m.max) {
       document.getElementById("editError").textContent =
         `"${m.label}" must be between 0 and ${m.max}.`;
@@ -377,19 +381,15 @@ async function saveEdit() {
     colValues[m.col] = val;
   }
   if (!valid) return;
-
   colValues["J"] = document.getElementById("ef_J").value;
-
-  // Update local data immediately (optimistic)
   const s = editTarget.student;
-  fmt.marks.forEach(m => { s[m.label] = colValues[m.col]; });
+  fmt.marks.forEach(m => {
+    s[m.label] = colValues[m.col] === "" ? "" : colValues[m.col];
+  });
   s["Comment"] = colValues["J"];
   s["Total"] = fmt.marks.reduce((sum, m) => sum + (Number(colValues[m.col]) || 0), 0);
-
   closeModal("editModal");
   renderTable(currentData);
-
-  // Persist to sheet if Apps Script available
   if (s._row) {
     const res = await callScript("updateStudentRow",
       [currentData.classKey, s._row, colValues]);
