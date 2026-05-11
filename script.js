@@ -191,7 +191,7 @@ function clearSearch() {
 }
 
 function isLoggedIn() {
-  return !document.getElementById("adminPanel").classList.contains("hidden");
+  return !document.getElementById("adminBadge").classList.contains("hidden");
 }
 
 function buildStudentCard(s, classKey) {
