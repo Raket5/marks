@@ -205,7 +205,7 @@ function buildStudentCard(s, classKey) {
     const v = getMarkValue(s, m.label);
     const isEmpty = (v === "" || v === null || v === undefined);
     const display = isEmpty
-      ? `<span class="sc-pending">— এখনো হয়নি —</span>`
+      ? `<span class="sc-pending">Not yet conducted</span>`
       : `<span class="sc-mark">${v}</span><span class="sc-max"> / ${m.max}</span>`;
     return `
       <tr>
@@ -216,44 +216,61 @@ function buildStudentCard(s, classKey) {
 
   const total   = Number(s["Total"] || 0);
   const comment = s["Comment"] || "";
+  const pct     = Math.round((total / fmt.total) * 100);
 
   return `
     <div class="student-card" id="studentCard">
       <div class="sc-header">
+        <div class="sc-anchor">⚓</div>
         <div class="sc-school">Bangladesh Navy School And College, CTG</div>
         <div class="sc-subtitle">ICT Result Card</div>
+        <div class="sc-divider"></div>
         <div class="sc-meta-row">
           <span><b>Class:</b> ${cls}</span>
           <span><b>Section:</b> ${sec}</span>
           <span><b>Subject:</b> ICT</span>
         </div>
-        <div class="sc-meta-row">
+        <div class="sc-meta-row" style="margin-top:4px;">
           <span><b>Teacher:</b> Mahmud</span>
           <span><b>Phone:</b> 01883100648</span>
         </div>
       </div>
       <div class="sc-student-info">
-        <div class="sc-name">${s["Student's Name"] || "—"}</div>
-        <div class="sc-roll">Roll: ${s["Roll"] || "—"}</div>
+        <div class="sc-name-row">
+          <div>
+            <div class="sc-name">${s["Student's Name"] || "—"}</div>
+            <div class="sc-roll">Roll No: <b>${s["Roll"] || "—"}</b></div>
+          </div>
+          <div class="sc-score-circle">
+            <div class="sc-circle-inner">
+              <span class="sc-circle-num">${total}</span>
+              <span class="sc-circle-den">/ ${fmt.total}</span>
+            </div>
+          </div>
+        </div>
       </div>
       <table class="sc-table">
         <thead>
-          <tr><th>Component</th><th>Marks</th></tr>
+          <tr><th>Component</th><th>Marks Obtained</th></tr>
         </thead>
-        <tbody>
-          ${rows}
-        </tbody>
+        <tbody>${rows}</tbody>
         <tfoot>
           <tr class="sc-total-row">
-            <td><b>Total</b></td>
-            <td><b>${total} / ${fmt.total}</b></td>
+            <td>Total Marks</td>
+            <td><b>${total}</b> / ${fmt.total} &nbsp;(${pct}%)</td>
           </tr>
         </tfoot>
       </table>
-      ${comment ? `<div class="sc-comment">💬 ${comment}</div>` : ""}
+      ${comment ? `<div class="sc-comment">📝 Remarks: ${comment}</div>` : ""}
       <div class="sc-footer">
-        <span>Subject Teacher Signature</span>
-        <span>________________</span>
+        <div class="sc-footer-left">
+          <div class="sc-sig-line"></div>
+          <div class="sc-sig-label">Subject Teacher</div>
+        </div>
+        <div class="sc-footer-right">
+          <div class="sc-sig-line"></div>
+          <div class="sc-sig-label">Class Teacher</div>
+        </div>
       </div>
     </div>`;
 }
@@ -263,83 +280,74 @@ function printStudentCard() {
   if (!area || !area.innerHTML.trim()) return;
   const w = window.open("", "_blank");
   w.document.write(`<!DOCTYPE html><html><head><title>Result Card</title>
-    <style>
-      * { margin:0; padding:0; box-sizing:border-box; }
-      body { font-family: 'Segoe UI', Arial, sans-serif; background:#fff; padding: 30px; }
-      .student-card { max-width: 520px; margin: 0 auto; border: 2px solid #1a2744; border-radius: 12px; overflow: hidden; }
-      .sc-header { background: #1a2744; color: #fff; padding: 20px 24px 14px; text-align: center; }
-      .sc-school { font-size: 15pt; font-weight: 700; letter-spacing: 0.3px; }
-      .sc-subtitle { font-size: 10pt; color: #c9a84c; margin-top: 4px; letter-spacing: 1px; text-transform: uppercase; }
-      .sc-meta-row { display: flex; justify-content: center; gap: 24px; margin-top: 8px; font-size: 9pt; color: #cdd6f4; }
-      .sc-student-info { background: #f0f4ff; padding: 14px 24px; border-bottom: 1px solid #dde3f0; }
-      .sc-name { font-size: 14pt; font-weight: 700; color: #1a2744; }
-      .sc-roll { font-size: 10pt; color: #555; margin-top: 2px; }
-      .sc-table { width: 100%; border-collapse: collapse; }
-      .sc-table th { background: #eef1fa; padding: 9px 16px; font-size: 9pt; text-align: left; color: #333; border-bottom: 2px solid #c9a84c; }
-      .sc-table td { padding: 10px 16px; font-size: 10pt; border-bottom: 1px solid #eee; }
-      .sc-label { color: #333; width: 65%; }
-      .sc-mark { font-weight: 700; font-size: 11pt; color: #1a2744; }
-      .sc-max { color: #888; font-size: 9pt; }
-      .sc-pending { color: #aaa; font-style: italic; font-size: 9pt; }
-      .sc-total-row td { background: #1a2744; color: #fff; font-size: 11pt; padding: 11px 16px; }
-      .sc-comment { padding: 10px 20px; font-size: 9.5pt; color: #555; background: #fffbf0; border-top: 1px solid #ede8d0; }
-      .sc-footer { display: flex; justify-content: space-between; padding: 16px 24px 14px; font-size: 9pt; color: #777; border-top: 1px solid #eee; }
-      @media print { body { padding: 0; } }
-    </style></head><body>
-    ${area.innerHTML}
-    </body></html>`);
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet"/>
+    <style>${getCardCSS()}</style>
+    </head><body>${area.innerHTML}</body></html>`);
   w.document.close();
   w.focus();
-  setTimeout(() => { w.print(); }, 400);
+  setTimeout(() => { w.print(); }, 600);
 }
 
 async function downloadStudentCard() {
   const area = document.getElementById("studentCardArea");
   if (!area || !area.innerHTML.trim()) return;
-
-  const studentName = currentData?.students?.[0]?.["Student's Name"] || "result";
   const roll = currentData?.students?.[0]?.["Roll"] || "";
+  const name = currentData?.students?.[0]?.["Student's Name"] || "result";
 
   const html = `<!DOCTYPE html><html><head><title>Result Card</title>
-    <style>
-      * { margin:0; padding:0; box-sizing:border-box; }
-      body { font-family: 'Segoe UI', Arial, sans-serif; background:#fff; }
-      .student-card { max-width: 520px; margin: 0 auto; border: 2px solid #1a2744; border-radius: 12px; overflow: hidden; }
-      .sc-header { background: #1a2744; color: #fff; padding: 20px 24px 14px; text-align: center; }
-      .sc-school { font-size: 15pt; font-weight: 700; }
-      .sc-subtitle { font-size: 10pt; color: #c9a84c; margin-top: 4px; text-transform: uppercase; }
-      .sc-meta-row { display: flex; justify-content: center; gap: 24px; margin-top: 8px; font-size: 9pt; color: #cdd6f4; }
-      .sc-student-info { background: #f0f4ff; padding: 14px 24px; border-bottom: 1px solid #dde3f0; }
-      .sc-name { font-size: 14pt; font-weight: 700; color: #1a2744; }
-      .sc-roll { font-size: 10pt; color: #555; margin-top: 2px; }
-      .sc-table { width: 100%; border-collapse: collapse; }
-      .sc-table th { background: #eef1fa; padding: 9px 16px; font-size: 9pt; text-align: left; color: #333; border-bottom: 2px solid #c9a84c; }
-      .sc-table td { padding: 10px 16px; font-size: 10pt; border-bottom: 1px solid #eee; }
-      .sc-label { color: #333; width: 65%; }
-      .sc-mark { font-weight: 700; font-size: 11pt; color: #1a2744; }
-      .sc-max { color: #888; font-size: 9pt; }
-      .sc-pending { color: #aaa; font-style: italic; font-size: 9pt; }
-      .sc-total-row td { background: #1a2744; color: #fff; font-size: 11pt; padding: 11px 16px; }
-      .sc-comment { padding: 10px 20px; font-size: 9.5pt; color: #555; background: #fffbf0; border-top: 1px solid #ede8d0; }
-      .sc-footer { display: flex; justify-content: space-between; padding: 16px 24px 14px; font-size: 9pt; color: #777; border-top: 1px solid #eee; }
-      @media print { @page { size: A4; margin: 20mm; } }
-    </style>
-    <script>window.onload = function(){ window.print(); window.onafterprint = function(){ window.close(); }; }<\/script>
-    </head><body>
-    ${area.innerHTML}
-    </body></html>`;
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet"/>
+    <style>${getCardCSS()}</style>
+    <script>window.onload=function(){window.print();window.onafterprint=function(){window.close();};};<\/script>
+    </head><body>${area.innerHTML}</body></html>`;
 
   const blob = new Blob([html], { type: "text/html" });
   const url  = URL.createObjectURL(blob);
   const w    = window.open(url, "_blank");
   if (!w) {
-    // fallback — direct download if popup blocked
     const a    = document.createElement("a");
     a.href     = url;
-    a.download = `result_${roll}_${studentName}.html`;
+    a.download = `result_${roll}_${name}.html`;
     a.click();
   }
   setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+
+function getCardCSS() {
+  return `
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family: 'Inter', 'Segoe UI', Arial, sans-serif; background: #f0f2f8; display:flex; justify-content:center; padding: 30px 16px; }
+    .student-card { width: 480px; background:#fff; border-radius:16px; overflow:hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.13); }
+    .sc-header { background: linear-gradient(135deg, #0f1f45 0%, #1a3a6b 100%); color:#fff; padding: 24px 24px 18px; text-align:center; }
+    .sc-anchor { font-size: 2rem; margin-bottom: 6px; }
+    .sc-school { font-size: 13pt; font-weight: 700; letter-spacing: 0.3px; line-height: 1.3; }
+    .sc-subtitle { font-size: 8pt; color: #c9a84c; margin-top: 5px; letter-spacing: 2px; text-transform: uppercase; }
+    .sc-divider { width: 50px; height: 2px; background: #c9a84c; margin: 10px auto; border-radius: 2px; }
+    .sc-meta-row { display:flex; justify-content:center; gap:20px; font-size: 8.5pt; color: #b8c8e8; flex-wrap:wrap; }
+    .sc-student-info { padding: 16px 24px; background: #f7f9ff; border-bottom: 1px solid #e8ecf8; }
+    .sc-name-row { display:flex; justify-content:space-between; align-items:center; }
+    .sc-name { font-size: 14pt; font-weight: 700; color: #0f1f45; }
+    .sc-roll { font-size: 9pt; color: #666; margin-top: 3px; }
+    .sc-score-circle { width: 68px; height: 68px; border-radius: 50%; background: linear-gradient(135deg, #0f1f45, #1a3a6b); display:flex; align-items:center; justify-content:center; flex-direction:column; box-shadow: 0 3px 12px rgba(15,31,69,0.25); }
+    .sc-circle-inner { text-align:center; }
+    .sc-circle-num { display:block; font-size: 16pt; font-weight: 700; color: #c9a84c; line-height:1; }
+    .sc-circle-den { display:block; font-size: 7.5pt; color: #aac; line-height:1.4; }
+    .sc-table { width:100%; border-collapse:collapse; }
+    .sc-table th { background: #f0f2f8; padding: 9px 18px; font-size: 8.5pt; text-align:left; color: #444; border-bottom: 2px solid #c9a84c; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; }
+    .sc-table td { padding: 10px 18px; font-size: 9.5pt; border-bottom: 1px solid #f0f2f8; }
+    .sc-label { color: #333; width: 60%; }
+    .sc-value { text-align: right; }
+    .sc-mark { font-weight: 700; font-size: 11pt; color: #0f1f45; }
+    .sc-max { color: #999; font-size: 8.5pt; }
+    .sc-pending { color: #bbb; font-style: italic; font-size: 8.5pt; background: #f8f8f8; padding: 2px 8px; border-radius: 10px; }
+    .sc-total-row td { background: linear-gradient(135deg, #0f1f45, #1a3a6b); color: #fff; font-size: 10pt; padding: 12px 18px; }
+    .sc-total-row td b { color: #c9a84c; font-size: 12pt; }
+    .sc-comment { padding: 10px 18px; font-size: 8.5pt; color: #555; background: #fffbf0; border-top: 1px solid #f0e8c8; }
+    .sc-footer { display:flex; justify-content:space-between; padding: 18px 32px 16px; border-top: 1px solid #eee; }
+    .sc-footer-left, .sc-footer-right { text-align:center; }
+    .sc-sig-line { width: 110px; border-bottom: 1.5px solid #999; margin-bottom: 5px; }
+    .sc-sig-label { font-size: 8pt; color: #888; }
+    @media print { body { background:#fff; padding:0; } .student-card { box-shadow:none; border-radius:0; width:100%; } @page { size: A4; margin: 15mm; } }
+  `;
 }
 // ---------------------------------------------------------------
 // RENDER TABLE
