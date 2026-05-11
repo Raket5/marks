@@ -64,8 +64,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 // ---------------------------------------------------------------
 async function callScript(fn, args) {
   if (!SCRIPT_URL || SCRIPT_URL.includes("YOUR_APPS_SCRIPT")) {
-    showDemoData(fn, args);
-    return null;
+    return showDemoData(fn, args);
   }
 
   let url = SCRIPT_URL;
@@ -105,6 +104,22 @@ async function callScript(fn, args) {
 // DEMO DATA (shown when no script URL is set)
 // ---------------------------------------------------------------
 function showDemoData(fn, args) {
+  if (fn === "getClasses") {
+    return [
+      { key: "6A",  label: "Class 6 — A" },
+      { key: "6B",  label: "Class 6 — B" },
+      { key: "6C",  label: "Class 6 — C" },
+      { key: "7A",  label: "Class 7 — A" },
+      { key: "7B",  label: "Class 7 — B" },
+      { key: "7C",  label: "Class 7 — C" },
+      { key: "8A",  label: "Class 8 — A" },
+      { key: "8B",  label: "Class 8 — B" },
+      { key: "9A",  label: "Class 9 — A" },
+      { key: "9B",  label: "Class 9 — B" },
+      { key: "10A", label: "Class 10 — A" },
+      { key: "10B", label: "Class 10 — B" },
+    ];
+  }
   if (fn === "getStudents" || fn === "searchByRoll") {
     const demo = {
       classKey: args[0] || "6C",
@@ -120,7 +135,9 @@ function showDemoData(fn, args) {
     };
     currentData = demo;
     renderTable(demo);
+    return demo;
   }
+  return null;
 }
 
 // ---------------------------------------------------------------
@@ -387,35 +404,118 @@ async function saveEdit() {
 // ---------------------------------------------------------------
 function openPrint() {
   if (!currentData) return;
+
+  document.getElementById("printExamSelect").value = "";
   document.getElementById("printExam").value = "";
+  document.getElementById("printExam").style.display = "none";
+
+  const fmt = getFormat(currentData.classKey);
+  const container = document.getElementById("printColOptions");
+  container.innerHTML = "";
+
+  const fixedCols = [
+    { id: "col_sl",   label: "Sl. No." },
+    { id: "col_roll", label: "Roll" },
+    { id: "col_name", label: "Student's Name" },
+  ];
+  fixedCols.forEach(fc => {
+    container.innerHTML += `
+      <label class="col-check-label">
+        <input type="checkbox" id="${fc.id}" checked />
+        ${fc.label}
+      </label>`;
+  });
+
+  fmt.marks.forEach((m, idx) => {
+    container.innerHTML += `
+      <label class="col-check-label">
+        <input type="checkbox" id="col_mark_${idx}" checked />
+        ${m.label}
+      </label>`;
+  });
+
+  container.innerHTML += `
+    <label class="col-check-label">
+      <input type="checkbox" id="col_total" checked />
+      Total (${fmt.total})
+    </label>
+    <label class="col-check-label">
+      <input type="checkbox" id="col_comment" checked />
+      Comment
+    </label>`;
+
+  document.querySelector('input[name="emptyMode"][value="number"]').checked = true;
+
   openModal("printModal");
+}
+
+function onExamSelectChange() {
+  const sel = document.getElementById("printExamSelect").value;
+  const customInput = document.getElementById("printExam");
+  if (sel === "custom") {
+    customInput.style.display = "block";
+    customInput.value = "";
+    customInput.focus();
+  } else {
+    customInput.style.display = "none";
+    customInput.value = sel;
+  }
 }
 
 function doPrint() {
   if (!currentData) return;
-  const exam  = document.getElementById("printExam").value.trim() || "—";
+
+  const sel = document.getElementById("printExamSelect").value;
+  let exam = "";
+  if (sel === "custom" || sel === "") {
+    exam = document.getElementById("printExam").value.trim() || "—";
+  } else {
+    exam = sel;
+  }
+
   const fmt   = getFormat(currentData.classKey);
   const label = getClassLabel(currentData.classKey);
   const parts = label.split("—");
   const cls   = (parts[0] || "").trim();
   const sec   = (parts[1] || "").trim();
 
-  const colHeaders = fmt.marks.map(m => `<th>${m.label}</th>`).join("");
+  const showSl      = document.getElementById("col_sl")?.checked;
+  const showRoll    = document.getElementById("col_roll")?.checked;
+  const showName    = document.getElementById("col_name")?.checked;
+  const showTotal   = document.getElementById("col_total")?.checked;
+  const showComment = document.getElementById("col_comment")?.checked;
+  const emptyMode   = document.querySelector('input[name="emptyMode"]:checked')?.value || "number";
+
+  const selectedMarks = fmt.marks.filter((m, idx) =>
+    document.getElementById(`col_mark_${idx}`)?.checked
+  );
+
+  let headerCells = "";
+  if (showSl)      headerCells += `<th>Sl.</th>`;
+  if (showRoll)    headerCells += `<th>Roll</th>`;
+  if (showName)    headerCells += `<th>Student's Name</th>`;
+  selectedMarks.forEach(m => { headerCells += `<th>${m.label}</th>`; });
+  if (showTotal)   headerCells += `<th>Total (${fmt.total})</th>`;
+  if (showComment) headerCells += `<th>Comment</th>`;
+
   const rows = currentData.students.map((s, i) => {
-    const markCells = fmt.marks.map(m => {
+    let cells = "";
+    if (showSl)   cells += `<td>${s["Sl."] || i+1}</td>`;
+    if (showRoll) cells += `<td>${s["Roll"] || ""}</td>`;
+    if (showName) cells += `<td>${s["Student's Name"] || ""}</td>`;
+
+    selectedMarks.forEach(m => {
       const v = getMarkValue(s, m.label);
-      return `<td>${v !== "" ? v : "0"}</td>`;
-    }).join("");
-    const total   = Number(s["Total"] || 0);
-    const comment = s["Comment"] || "";
-    return `<tr>
-      <td>${s["Sl."] || i+1}</td>
-      <td>${s["Roll"] || ""}</td>
-      <td>${s["Student's Name"] || ""}</td>
-      ${markCells}
-      <td><strong>${total}</strong></td>
-      <td>${comment}</td>
-    </tr>`;
+      const display = (v !== "" && v !== null && v !== undefined)
+        ? v
+        : (emptyMode === "blank" ? "" : "0");
+      cells += `<td>${display}</td>`;
+    });
+
+    if (showTotal)   cells += `<td><strong>${Number(s["Total"] || 0)}</strong></td>`;
+    if (showComment) cells += `<td>${s["Comment"] || ""}</td>`;
+
+    return `<tr>${cells}</tr>`;
   }).join("");
 
   document.getElementById("printArea").innerHTML = `
@@ -431,11 +531,7 @@ function doPrint() {
         </div>
       </div>
       <table class="print-table">
-        <thead><tr>
-          <th>Sl.</th><th>Roll</th><th>Student's Name</th>
-          ${colHeaders}
-          <th>Total (${fmt.total})</th><th>Comment</th>
-        </tr></thead>
+        <thead><tr>${headerCells}</tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </div>`;
