@@ -566,7 +566,7 @@ document.addEventListener("keydown", e => {
       document.getElementById("printModal").classList.contains("hidden");
     if (allModalsHidden) {
       const roll = document.getElementById("rollInput").value.trim();
-      if (roll) searchByRoll();
+      if (roll) searchRoll();
       else loadClass();
     }
   }
