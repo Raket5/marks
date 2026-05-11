@@ -7,7 +7,7 @@
 // ---------------------------------------------------------------
 // ⚙️  CONFIGURATION — set your deployed Apps Script URL here
 // ---------------------------------------------------------------
-const SCRIPT_URL = "YOUR_APPS_SCRIPT_WEB_APP_URL_HERE";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw0_wGak0psZ7d9-lXRc277x05awHgADkmmUcwi4gyZRvsLYj17-7LuqbkPIohMvxrIzg/exec";
 // e.g. "https://script.google.com/macros/s/AKfycbx.../exec"
 // ---------------------------------------------------------------
 
