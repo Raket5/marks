@@ -520,7 +520,7 @@ function openEdit(idx) {
     return `<div>
       <label>${m.label} <em style="color:#999">(max ${m.max})</em></label>
       <input type="number" id="ef_${m.col}" min="0" max="${m.max}" step="0.5"
-             value="${val !== "" ? val : 0}" />
+             value="${val !== "" ? val : ""}" />
     </div>`;
   }).join("") + `<div class="full-width">
       <label>Comment</label>
