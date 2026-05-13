@@ -730,7 +730,7 @@ document.addEventListener("click", e => {
 document.addEventListener("keydown", e => {
   if (e.key === "Enter") {
     if (!document.getElementById("loginModal").classList.contains("hidden")) doLogin();
-    if (!document.getElementById("editModal").classList.contains("hidden"))  saveEdit();
+    if (!document.getElementById("editModal").classList.contains("hidden")) { e.preventDefault(); saveEdit(); }
     if (!document.getElementById("printModal").classList.contains("hidden")) doPrint();
     // Search — Enter works from class dropdown or roll input
     const allModalsHidden =
